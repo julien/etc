@@ -36,7 +36,6 @@ int main(void) {
 			shader = LoadShader(0, shaderPath);
 			timeLoc = GetShaderLocation(shader, "time");
 			resLoc = GetShaderLocation(shader, "resolution");
-			// rotLoc = GetShaderLocation(shader, "rotation");
 
 			TraceLog(LOG_INFO, "shader reloaded");
 		}
