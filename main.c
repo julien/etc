@@ -1,3 +1,4 @@
+#include <math.h>
 #include <sys/stat.h>
 
 #include "raylib.h"
@@ -23,6 +24,7 @@ int main(void) {
 
 	int timeLoc = GetShaderLocation(shader, "time");
 	int resLoc = GetShaderLocation(shader, "resolution");
+	int rotLoc = GetShaderLocation(shader, "rotation");
 
 	float resolution[2] = {(float)width, (float)height};
 	float startTime = (float)GetTime();
@@ -36,13 +38,18 @@ int main(void) {
 			shader = LoadShader(0, shaderPath);
 			timeLoc = GetShaderLocation(shader, "time");
 			resLoc = GetShaderLocation(shader, "resolution");
+			rotLoc = GetShaderLocation(shader, "rotation");
 
 			TraceLog(LOG_INFO, "shader reloaded");
 		}
 
-		float time = (float)(GetTime() - startTime);
-		SetShaderValue(shader, timeLoc, &time, SHADER_UNIFORM_FLOAT);
+		float time = (float)GetTime();
+		float nextTime = (float)(time - startTime);
+		float rotation[4] = { cosf(time), -sinf(time), sinf(time), cosf(time) };
+
+		SetShaderValue(shader, timeLoc, &nextTime, SHADER_UNIFORM_FLOAT);
 		SetShaderValue(shader, resLoc, &resolution, SHADER_UNIFORM_VEC2);
+		SetShaderValue(shader, rotLoc, &rotation, SHADER_UNIFORM_VEC4);
 
 		BeginDrawing();
 		ClearBackground(BLACK);

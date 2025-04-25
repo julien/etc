@@ -4,9 +4,13 @@ out vec4 FragColor;
 
 uniform float time;
 uniform vec2 resolution;
+uniform vec4 rotation;
 
 void main() {
 	vec2 uv = (gl_FragCoord.xy - (resolution * 0.5)) / resolution.y;
+
+	mat2 rot = mat2(rotation.xy, rotation.zw);
+	uv = rot * uv;
 
 	float pattern = fract(
 		max(abs(uv.x * 2.0) + uv.y * sin(time * (2.0)),
