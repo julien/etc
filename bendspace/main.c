@@ -15,7 +15,7 @@ int main(void) {
 	const int height = 500;
 	const char *shaderPath = "shader.frag";
 
-	InitWindow(width, height, ".~. adventure time");
+	InitWindow(width, height, "");
 	SetTargetFPS(60);
 
 	Shader shader = LoadShader(0, shaderPath);

@@ -1,6 +1,6 @@
 [
 	{
-		"directory": "/Users/jc/Documents/dump",
+		"directory": ".",
 		"command": "clang main.c -I/Users/jc/.local/raylib/include",
 		"file": "main.c"
 	}
