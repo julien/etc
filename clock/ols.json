@@ -1,0 +1,12 @@
+{
+	"$schema": "https://raw.githubusercontent.com/DanielGavin/ols/master/misc/ols.schema.json",
+	"collections": [
+		{ "name": "core", "path": "/Users/jc/.local/odin/src/core" },
+		{ "name": "shared", "path": "/Users/jc/.local/odin/src/shared" }
+	],
+	"enable_format": false,
+	"enable_hover": true,
+	"enable_document_symbols": true,
+	"enable_inlay_hints_params": false,
+	"enable_inlay_hints_default_params": false
+}
