@@ -13,7 +13,7 @@ long modTime(const char *name) {
 int main(void) {
 	const int width = 800;
 	const int height = 500;
-	const char *shaderPath = "shader.frag";
+	const char *shaderPath = "bendspace.frag";
 
 	InitWindow(width, height, "");
 	SetTargetFPS(60);

@@ -5,5 +5,5 @@ FRAMEWORKS=-framework OpenGL -framework Cocoa -framework IOKit \
            -framework CoreAudio -framework CoreVideo -framework AudioToolbox
 
 all:
-	$(CC) main.c $(INCLUDE) $(LIB) $(FRAMEWORKS) -o main
+	$(CC) bendspace.c $(INCLUDE) $(LIB) $(FRAMEWORKS) -o bendspace
 
