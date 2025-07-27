@@ -23,7 +23,8 @@ main :: proc() {
 		":" = "    , ·  , .  ",
 	}
 
-	region, ok := timezone.region_load("Europe/Paris")
+	// We could pass the "region" via os.args or define a flag.
+	region, ok := timezone.region_load("Europe/Madrid")
 	if !ok {
 		fmt.eprintln("failed to load timezone")
 		os.exit(1)
@@ -32,18 +33,7 @@ main :: proc() {
 	for {
 		fmt.printf("\x1b[2J\x1b[H")
 
-		// Get current time in the current tz region and format it in HH:MM:SS
-		// (there's probably a better way to do this)
-		now := time.now()
-		dt, ok := time.time_to_datetime(now)
-		if !ok {
-			continue
-		}
-		dt, ok = timezone.datetime_to_tz(dt, region)
-		if !ok {
-			continue
-		}
-		now, ok = time.datetime_to_time(dt)
+		now, ok := current_time(region)
 		if !ok {
 			continue
 		}
@@ -63,4 +53,22 @@ main :: proc() {
 		fmt.printf("%s", strings.to_string(sb))
 		time.sleep(time.Second)
 	}
+}
+
+// Returns the current time given a tz region (there's probably a better way to do this).
+current_time :: proc(region: ^datetime.TZ_Region) -> (time.Time, bool) {
+	now := time.now()
+	dt, ok := time.time_to_datetime(now)
+	if !ok {
+		return {}, false
+	}
+	dt, ok = timezone.datetime_to_tz(dt, region)
+	if !ok {
+		return {}, false
+	}
+	now, ok = time.datetime_to_time(dt)
+	if !ok {
+		return {}, false
+	}
+	return now, true
 }
