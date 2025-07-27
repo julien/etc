@@ -9,7 +9,7 @@ main() {
 
     [[ "$EDITOR" =~ n?vim ]] || return 1
 
-    local log="git --no-pager log --oneline --color=always -n 128"
+    local log="git --no-pager log --oneline --color=always"
 
     local opts=( "$@" )
     if [[ "${#opts[@]}" -eq 0 ]]; then
