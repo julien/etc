@@ -1,0 +1,25 @@
+deansi
+======
+Removes ANSI escape codes:
+
+deansi (written in Zig as a learning exercise, don't expect much) reads from
+standard input or from a list of files, strips out any ANSI escape sequences
+(like color codes or cursor movement codes), and prints the cleaned text to
+standard output.
+
+To build (and if zig is installed), run:
+
+    zig build -Doptimize=ReleaseSmall
+
+Usage:
+Either pipe the output of another command into `deansi`:
+
+	ls -al --color=always | ./zig-out/bin/deansi
+
+or pass one or more file paths as arguments and their "cleaned" content
+will be written to standard output:
+
+Examples:
+	./zig-out/bin/deansi gen.log
+or
+	./zig-out/bin/deansi gen.log ls.txt > combined.txt
