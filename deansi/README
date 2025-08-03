@@ -14,12 +14,12 @@ To build (and if zig is installed), run:
 Usage:
 Either pipe the output of another command into `deansi`:
 
-	ls -al --color=always | ./zig-out/bin/deansi
+	ls -ahl --color=always $HOME | ./zig-out/bin/deansi | cat -v
 
 or pass one or more file paths as arguments and their "cleaned" content
 will be written to standard output:
 
 Examples:
-	./zig-out/bin/deansi gen.log
+	./zig-out/bin/deansi log1.log
 or
-	./zig-out/bin/deansi gen.log ls.txt > combined.txt
+	./zig-out/bin/deansi log1.log log2.log > combined.log
