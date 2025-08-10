@@ -1,5 +1,5 @@
 CC = cc
-CFLAGS = -Wall -Wextra -std=c99 -pedantic -fsanitize=address
+CFLAGS = -Wall -Wextra -std=c99 -pedantic
 TARGET = deansi
 
 all: $(TARGET)
