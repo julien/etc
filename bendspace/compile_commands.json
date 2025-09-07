@@ -1,7 +1,7 @@
 [
 	{
 		"directory": ".",
-		"command": "clang main.c -I/Users/jc/.local/raylib/include",
+		"command": "clang bendspace.c -I/Users/jc/.local/raylib/include",
 		"file": "bendspace.c"
 	}
 ]
