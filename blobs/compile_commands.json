@@ -1,0 +1,7 @@
+[
+	{
+		"directory": ".",
+		"command": "clang blobs.c -I/Users/jc/.local/raylib/include",
+		"file": "blobs.c"
+	}
+]
