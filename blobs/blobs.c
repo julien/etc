@@ -1,13 +1,13 @@
 #include "raylib.h"
-#include "rlgl.h"
 #include "raymath.h"
+#include "rlgl.h"
 #define GL_SILENCE_DEPRECATION
 #include <OpenGL/gl3.h>
 #include <OpenGL/gl3ext.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#define WIDTH  1024
+#define WIDTH 1024
 #define HEIGHT 1024
 
 #define MAX_POINTS 8000
@@ -29,13 +29,13 @@ struct blob {
 
 void updatePoints(float *points, struct blob *blobs) {
 	for (int i = 0; i < numPoints; i += POINT_SIZE) {
-		float x =  points[i+0];
-		float y =  points[i+1];
-		float r =  points[i+2];
-		float vx = points[i+3];
-		float vy = points[i+4];
-		float ax = points[i+5];
-		float ay = points[i+6];
+		float x = points[i + 0];
+		float y = points[i + 1];
+		float r = points[i + 2];
+		float vx = points[i + 3];
+		float vy = points[i + 4];
+		float ax = points[i + 5];
+		float ay = points[i + 6];
 
 		vx += ax;
 		vy += ay;
@@ -46,7 +46,7 @@ void updatePoints(float *points, struct blob *blobs) {
 			struct blob b = blobs[k];
 			float dx = x - b.cx;
 			float dy = y - b.cy;
-			float dist = sqrt(dx*dx + dy*dy);
+			float dist = sqrt(dx * dx + dy * dy);
 
 			if (dist < b.cr) {
 				x = (b.cx + dx / dist * b.cr) * 0.09;
@@ -68,9 +68,9 @@ void updatePoints(float *points, struct blob *blobs) {
 			y = HEIGHT;
 		}
 
-	 	points[i+0] = x;
-		points[i+1] = y;
-		points[i+2] = r;
+		points[i + 0] = x;
+		points[i + 1] = y;
+		points[i + 2] = r;
 	}
 
 	for (int i = 0; i < MAX_BLOBS; i++) {
@@ -116,7 +116,7 @@ int main(void) {
 	struct blob blobs[MAX_BLOBS] = {0};
 	for (int i = 0; i < MAX_BLOBS; i++) {
 		blobs[i].cx = GetRandomValue(0, WIDTH);
- 		blobs[i].cy = GetRandomValue(0, HEIGHT);
+		blobs[i].cy = GetRandomValue(0, HEIGHT);
 		blobs[i].cr = GetRandomValue(20, 100);
 
 		blobs[i].nx = GetRandomValue(0, WIDTH);
@@ -130,13 +130,13 @@ int main(void) {
 
 	float points[numPoints] = {0};
 	for (int i = 0; i < numPoints; i += POINT_SIZE) {
-		points[i+0] = (float)GetRandomValue(10, WIDTH - 10);
-		points[i+1] = (float)GetRandomValue(10, HEIGHT - 10);
-		points[i+2] = (10 + rand() % 20) * 0.1;
-		points[i+3] = GetRandomValue(-3, 3);
-		points[i+4] = GetRandomValue(-3, 3);
-		points[i+5] = GetRandomValue(-2, 2) * 0.1;
-		points[i+6] = GetRandomValue(-2, 2) * 0.1;
+		points[i + 0] = (float)GetRandomValue(10, WIDTH - 10);
+		points[i + 1] = (float)GetRandomValue(10, HEIGHT - 10);
+		points[i + 2] = (10 + rand() % 20) * 0.1;
+		points[i + 3] = GetRandomValue(-3, 3);
+		points[i + 4] = GetRandomValue(-3, 3);
+		points[i + 5] = GetRandomValue(-2, 2) * 0.1;
+		points[i + 6] = GetRandomValue(-2, 2) * 0.1;
 	}
 
 	unsigned int stride = sizeof(float) * POINT_SIZE;
@@ -145,23 +145,27 @@ int main(void) {
 	GLuint vbo = 0;
 	glGenBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * numPoints, points, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * numPoints, points,
+	             GL_STATIC_DRAW);
 
 	GLuint vao = 0;
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
-	glVertexAttribPointer(loc, 2, GL_FLOAT, GL_FALSE, stride, (void*)0);
+	glVertexAttribPointer(loc, 2, GL_FLOAT, GL_FALSE, stride, (void *)0);
 	glEnableVertexAttribArray(0);
 
 	loc = GetShaderLocationAttrib(shader, "pointSize");
-	glVertexAttribPointer(loc, 1, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(float)*2));
+	glVertexAttribPointer(loc, 1, GL_FLOAT, GL_FALSE, stride,
+	                      (void *)(sizeof(float) * 2));
 	glEnableVertexAttribArray(1);
 
 	glUseProgram(shader.id);
 	glEnable(GL_PROGRAM_POINT_SIZE);
 
-	Matrix modelViewProjection = MatrixMultiply(rlGetMatrixModelview(), rlGetMatrixProjection());
-	glUniformMatrix4fv(shader.locs[SHADER_LOC_MATRIX_MVP], 1, false, MatrixToFloat(modelViewProjection));
+	Matrix modelViewProjection =
+	    MatrixMultiply(rlGetMatrixModelview(), rlGetMatrixProjection());
+	glUniformMatrix4fv(shader.locs[SHADER_LOC_MATRIX_MVP], 1, false,
+	                   MatrixToFloat(modelViewProjection));
 
 	while (!WindowShouldClose()) {
 		updatePoints(points, blobs);
@@ -169,8 +173,10 @@ int main(void) {
 		float time = (float)GetTime();
 		float nextTime = (float)(time - startTime);
 
-		SetShaderValue(shader, timeLoc, &nextTime, SHADER_UNIFORM_FLOAT);
-		SetShaderValue(shader, resLoc, &resolution, SHADER_UNIFORM_VEC2);
+		SetShaderValue(shader, timeLoc, &nextTime,
+		               SHADER_UNIFORM_FLOAT);
+		SetShaderValue(shader, resLoc, &resolution,
+		               SHADER_UNIFORM_VEC2);
 
 		BeginDrawing();
 		DrawFPS(10, 10);
@@ -181,7 +187,8 @@ int main(void) {
 
 		glBindVertexArray(vao);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * numPoints, points);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * numPoints,
+		                points);
 
 		glDrawArrays(GL_POINTS, 0, MAX_POINTS);
 		glBindVertexArray(0);
