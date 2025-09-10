@@ -3,6 +3,8 @@
 in vec2 vertexPosition;
 in float pointSize;
 
+uniform float time;
+
 out float u_pointSize;
 
 void main() {
@@ -10,5 +12,5 @@ void main() {
 	u_pointSize = pointSize;
 
 	gl_Position = vec4(pos, 0.0, 1.0);
-	gl_PointSize = pointSize;
+	gl_PointSize = 3 - abs(sin(pointSize * time));
 }

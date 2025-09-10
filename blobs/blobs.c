@@ -129,9 +129,9 @@ void update(struct blob *blobs, float *points) {
 		blobs[i].cr += vr;
 
 		if (ax < 0.01 && ay < 0.01 && ar < 0.01) {
-			blobs[i].ex = rand_range(2, 6) * 0.009;
-			blobs[i].ey = rand_range(2, 6) * 0.009;
-			blobs[i].er = rand_range(2, 6) * 0.01;
+			blobs[i].ex = rand_range(2, 6) * 0.008;
+			blobs[i].ey = rand_range(2, 6) * 0.008;
+			blobs[i].er = rand_range(2, 6) * 0.09;
 
 			blobs[i].nx = rand_range(-10, 10) * 0.1;
 			blobs[i].ny = rand_range(-10, 10) * 0.1;
@@ -262,6 +262,9 @@ int main(void) {
 
 	glUseProgram(prog);
 
+	GLint timeLoc = glGetUniformLocation(prog, "time");
+	double prevTime = glfwGetTime();
+
 	glEnable(GL_PROGRAM_POINT_SIZE);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -275,7 +278,12 @@ int main(void) {
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		double currTime = glfwGetTime();
+		double elapsedTime = currTime - prevTime;
+		prevTime = currTime;
 		update(blobs, points);
+
+		glUniform1f(timeLoc, prevTime);
 
 		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * numPoints,
 		                points);
