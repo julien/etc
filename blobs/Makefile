@@ -1,6 +1,6 @@
 CC=clang
-INCLUDE=-I$(HOME)/.local/raylib/include
-LIB=$(HOME)/.local/raylib/lib/libraylib.a
+INCLUDE=-I$(HOME)/.local/glfw/include
+LIB=$(HOME)/.local/glfw/lib/libglfw3.a
 FRAMEWORKS=-framework OpenGL -framework Cocoa -framework IOKit \
            -framework CoreAudio -framework CoreVideo -framework AudioToolbox
 

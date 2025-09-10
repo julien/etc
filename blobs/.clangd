@@ -1,2 +1,2 @@
 CompileFlags:
-  Add: [-I/Users/jc/.local/raylib/include]
+  Add: [-I/Users/jc/.local/glfw/include]

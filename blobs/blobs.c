@@ -1,20 +1,103 @@
-#include "raylib.h"
-#include "raymath.h"
-#include "rlgl.h"
-#define GL_SILENCE_DEPRECATION
-#include <OpenGL/gl3.h>
-#include <OpenGL/gl3ext.h>
+#define GLAD_GL_IMPLEMENTATION
+#include <glad/gl.h>
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
+
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #define WIDTH 1024
 #define HEIGHT 1024
+#define SHADER_MAX_LENGTH 262144
 
-#define MAX_POINTS 8000
+void sizeCallback(GLFWwindow *window, int width, int height) {
+	glViewport(0, 0, width, height);
+}
+
+void print_infolog(GLuint index) {
+	int max_length = 2048;
+	int actual_length = 0;
+	char log[2048];
+	glGetShaderInfoLog(index, max_length, &actual_length, log);
+	fprintf(stderr, "%u:\n%s\n", index, log);
+}
+
+int file_to_str(const char *file_name, char *shader_str, int max_len) {
+	FILE *file = fopen(file_name, "r");
+	if (!file) {
+		fprintf(stderr, "couldn't open file %s", file_name);
+		return 0;
+	}
+
+	size_t cnt = fread(shader_str, 1, max_len - 1, file);
+	if ((int)cnt >= max_len - 1) {
+		fprintf(stderr, "file %s too big", file_name);
+		return 0;
+	}
+
+	if (ferror(file)) {
+		fprintf(stderr, "couldn't read shader %s", file_name);
+		fclose(file);
+		return 0;
+	}
+
+	/* append \0 to the end of string */
+	shader_str[cnt] = 0;
+
+	fclose(file);
+	return 1;
+}
+
+int create_shader(const char *file_name, GLuint *shader, GLenum type) {
+	char shader_string[SHADER_MAX_LENGTH];
+	file_to_str(file_name, shader_string, SHADER_MAX_LENGTH);
+
+	*shader = glCreateShader(type);
+	const GLchar *p = (const GLchar *)shader_string;
+	glShaderSource(*shader, 1, &p, NULL);
+	glCompileShader(*shader);
+
+	int params = -1;
+	glGetShaderiv(*shader, GL_COMPILE_STATUS, &params);
+	if (GL_TRUE != params) {
+		fprintf(stderr, "couldn't compile shader %i", *shader);
+		print_infolog(*shader);
+		return 0;
+	}
+	return 1;
+}
+
+GLuint create_program(const char *vert_src, const char *frag_src) {
+	GLuint vert, frag;
+	create_shader(vert_src, &vert, GL_VERTEX_SHADER);
+	create_shader(frag_src, &frag, GL_FRAGMENT_SHADER);
+	GLuint prog = glCreateProgram();
+	glAttachShader(prog, vert);
+	glAttachShader(prog, frag);
+	glLinkProgram(prog);
+	GLint params = -1;
+	glGetProgramiv(prog, GL_LINK_STATUS, &params);
+	if (GL_TRUE != params) {
+		fprintf(stderr, "couldn't link shader program %u", prog);
+		print_infolog(prog);
+		return -1;
+	}
+	glDeleteShader(vert);
+	glDeleteShader(frag);
+	return prog;
+}
+
+float rand_range(float min, float max) {
+	return min + rand() / (RAND_MAX / (max - min + 1) + 1);
+}
+
+#define MAX_POINTS 10000
 #define POINT_SIZE 7
 const unsigned int numPoints = MAX_POINTS * POINT_SIZE;
 
-#define MAX_BLOBS 5
+#define MAX_BLOBS 4
 struct blob {
 	float cx;
 	float cy;
@@ -27,7 +110,35 @@ struct blob {
 	float er;
 };
 
-void updatePoints(float *points, struct blob *blobs) {
+void update(struct blob *blobs, float *points) {
+	for (int i = 0; i < MAX_BLOBS; i++) {
+		float dx = blobs[i].nx - blobs[i].cx;
+		float dy = blobs[i].ny - blobs[i].cy;
+		float dr = blobs[i].nr - blobs[i].cr;
+
+		float ax = fabs(dx);
+		float ay = fabs(dy);
+		float ar = fabs(dr);
+
+		float vx = dx * blobs[i].ex;
+		float vy = dy * blobs[i].ey;
+		float vr = dr * blobs[i].er;
+
+		blobs[i].cx += vx;
+		blobs[i].cy += vy;
+		blobs[i].cr += vr;
+
+		if (ax < 0.01 && ay < 0.01 && ar < 0.01) {
+			blobs[i].ex = rand_range(2, 6) * 0.009;
+			blobs[i].ey = rand_range(2, 6) * 0.009;
+			blobs[i].er = rand_range(2, 6) * 0.01;
+
+			blobs[i].nx = rand_range(-10, 10) * 0.1;
+			blobs[i].ny = rand_range(-10, 10) * 0.1;
+			blobs[i].nr = rand_range(2, 30) * 0.01;
+		}
+	}
+
 	for (int i = 0; i < numPoints; i += POINT_SIZE) {
 		float x = points[i + 0];
 		float y = points[i + 1];
@@ -49,151 +160,133 @@ void updatePoints(float *points, struct blob *blobs) {
 			float dist = sqrt(dx * dx + dy * dy);
 
 			if (dist < b.cr) {
-				x = (b.cx + dx / dist * b.cr) * 0.09;
-				y = (b.cy + dy / dist * b.cr) * 0.09;
-				r = (10 + rand() % 20) * 0.1;
+				x = b.cx + dx / dist * b.cr;
+				y = b.cy + dy / dist * b.cr;
+				r = (10 + rand() % 40) * 0.1;
 			}
 		}
 
-		x += vx;
-		y += vy;
-		if (x > WIDTH) {
-			x = 0.0;
-		} else if (x < 0.0) {
-			x = WIDTH;
+		x += vx * 0.01;
+		y += vy * 0.01;
+
+		if (x > 1.0) {
+			x = -1.0;
+		} else if (x < -1.0) {
+			x = 1.0;
 		}
-		if (y > HEIGHT) {
-			y = 0.0;
-		} else if (y < 0.0) {
-			y = HEIGHT;
+		if (y > 1.0) {
+			y = -1.0;
+		} else if (y < -1.0) {
+			y = 1.0;
 		}
 
 		points[i + 0] = x;
 		points[i + 1] = y;
 		points[i + 2] = r;
 	}
-
-	for (int i = 0; i < MAX_BLOBS; i++) {
-		float dx = blobs[i].nx - blobs[i].cx;
-		float dy = blobs[i].ny - blobs[i].cy;
-		float dr = blobs[i].nr - blobs[i].cr;
-
-		float ax = fabs(dx);
-		float ay = fabs(dy);
-		float ar = fabs(dr);
-
-		if (ax > 0.01 && ay > 0.01 && ar > 0.01) {
-			dx *= blobs[i].ex;
-			dy *= blobs[i].ey;
-			dr *= blobs[i].er;
-
-			blobs[i].cx += dx * GetRandomValue(3, 9) * 0.01;
-			blobs[i].cy += dy * GetRandomValue(3, 9) * 0.01;
-			blobs[i].cr += dr * GetRandomValue(6, 9) * 0.1;
-		} else {
-			blobs[i].ex = GetRandomValue(1, 3) * 0.08;
-			blobs[i].ey = GetRandomValue(1, 3) * 0.08;
-			blobs[i].er = GetRandomValue(1, 3) * 0.08;
-
-			blobs[i].nx = GetRandomValue(0, WIDTH);
-			blobs[i].ny = GetRandomValue(0, HEIGHT);
-			blobs[i].nr = GetRandomValue(20, 100);
-		}
-	}
 }
 
 int main(void) {
-	InitWindow(WIDTH, HEIGHT, "");
-	SetTargetFPS(60);
+	srand(time(NULL));
 
-	Shader shader = LoadShader("blobs.vert", "blobs.frag");
-	int timeLoc = GetShaderLocation(shader, "time");
-	int resLoc = GetShaderLocation(shader, "resolution");
+	if (!glfwInit())
+		exit(EXIT_FAILURE);
 
-	float resolution[2] = {(float)WIDTH, (float)HEIGHT};
-	float startTime = (float)GetTime();
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+	GLFWwindow *win = glfwCreateWindow(WIDTH, HEIGHT, "", NULL, NULL);
+	if (!win) {
+		glfwTerminate();
+		exit(EXIT_FAILURE);
+	}
+
+	GLFWmonitor *mon = glfwGetPrimaryMonitor();
+	const GLFWvidmode *mode = glfwGetVideoMode(mon);
+
+	int x = (int)((mode->width - WIDTH) * 0.5);
+	int y = (int)((mode->height - HEIGHT) * 0.5);
+
+	glfwSetWindowPos(win, x, y);
+	glfwSetFramebufferSizeCallback(win, sizeCallback);
+
+	glfwMakeContextCurrent(win);
+	gladLoadGL(glfwGetProcAddress);
+	glfwSwapInterval(1);
+
+	GLuint prog = create_program("blobs.vert", "blobs.frag");
 
 	struct blob blobs[MAX_BLOBS] = {0};
 	for (int i = 0; i < MAX_BLOBS; i++) {
-		blobs[i].cx = GetRandomValue(0, WIDTH);
-		blobs[i].cy = GetRandomValue(0, HEIGHT);
-		blobs[i].cr = GetRandomValue(20, 100);
-
-		blobs[i].nx = GetRandomValue(0, WIDTH);
-		blobs[i].ny = GetRandomValue(0, HEIGHT);
-		blobs[i].nr = GetRandomValue(20, 100);
-
-		blobs[i].ex = GetRandomValue(1, 3) * 0.08;
-		blobs[i].ey = GetRandomValue(1, 3) * 0.08;
-		blobs[i].er = GetRandomValue(1, 3) * 0.08;
+		blobs[i].cx = 0.0 + (i * 0.1);
+		blobs[i].cy = 0.0 + (i * 0.1);
+		blobs[i].cr = rand_range(0.1, 3) * 0.1;
+		blobs[i].nx = rand_range(-10, 10) * 0.1;
+		blobs[i].ny = rand_range(-10, 10) * 0.1;
+		blobs[i].nr = rand_range(0.1, 3) * 0.1;
+		blobs[i].ex = rand_range(2, 6) * 0.01;
+		blobs[i].ey = rand_range(2, 6) * 0.01;
+		blobs[i].er = rand_range(2, 6) * 0.01;
 	}
 
 	float points[numPoints] = {0};
 	for (int i = 0; i < numPoints; i += POINT_SIZE) {
-		points[i + 0] = (float)GetRandomValue(10, WIDTH - 10);
-		points[i + 1] = (float)GetRandomValue(10, HEIGHT - 10);
-		points[i + 2] = (10 + rand() % 20) * 0.1;
-		points[i + 3] = GetRandomValue(-3, 3);
-		points[i + 4] = GetRandomValue(-3, 3);
-		points[i + 5] = GetRandomValue(-2, 2) * 0.1;
-		points[i + 6] = GetRandomValue(-2, 2) * 0.1;
+		points[i + 0] = rand_range(-10, 10) * 0.1;
+		points[i + 1] = rand_range(-10, 10) * 0.1;
+		points[i + 2] = (10 + rand() % 80) * 0.1;
+		points[i + 3] = rand_range(-3, 3) * 0.0001;
+		points[i + 4] = rand_range(-3, 3) * 0.0001;
+		points[i + 5] = rand_range(-2, -9) * 0.1;
+		points[i + 6] = rand_range(-2, -9) * 0.1;
 	}
 
-	unsigned int stride = sizeof(float) * POINT_SIZE;
-	int loc = shader.locs[SHADER_LOC_VERTEX_POSITION];
-
-	GLuint vbo = 0;
+	GLuint vbo;
 	glGenBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * numPoints, points,
 	             GL_STATIC_DRAW);
 
-	GLuint vao = 0;
+	int stride = sizeof(float) * POINT_SIZE;
+
+	GLuint vao;
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
-	glVertexAttribPointer(loc, 2, GL_FLOAT, GL_FALSE, stride, (void *)0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, stride, NULL);
 	glEnableVertexAttribArray(0);
 
-	loc = GetShaderLocationAttrib(shader, "pointSize");
-	glVertexAttribPointer(loc, 1, GL_FLOAT, GL_FALSE, stride,
+	glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, stride,
 	                      (void *)(sizeof(float) * 2));
 	glEnableVertexAttribArray(1);
 
-	glUseProgram(shader.id);
+	glUseProgram(prog);
+
 	glEnable(GL_PROGRAM_POINT_SIZE);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	Matrix modelViewProjection =
-	    MatrixMultiply(rlGetMatrixModelview(), rlGetMatrixProjection());
-	glUniformMatrix4fv(shader.locs[SHADER_LOC_MATRIX_MVP], 1, false,
-	                   MatrixToFloat(modelViewProjection));
+	glClearColor(0.0, 0.0, 0.0, 1.0);
 
-	while (!WindowShouldClose()) {
-		updatePoints(points, blobs);
+	while (!glfwWindowShouldClose(win)) {
+		int w, h;
+		glfwGetFramebufferSize(win, &w, &h);
+		glViewport(0, 0, w, h);
 
-		float time = (float)GetTime();
-		float nextTime = (float)(time - startTime);
-
-		SetShaderValue(shader, timeLoc, &nextTime,
-		               SHADER_UNIFORM_FLOAT);
-		SetShaderValue(shader, resLoc, &resolution,
-		               SHADER_UNIFORM_VEC2);
-
-		BeginDrawing();
-		DrawFPS(10, 10);
-
-		glViewport(0, 0, WIDTH, HEIGHT);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glUseProgram(shader.id);
 
-		glBindVertexArray(vao);
-		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		update(blobs, points);
+
 		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * numPoints,
 		                points);
 
 		glDrawArrays(GL_POINTS, 0, MAX_POINTS);
-		glBindVertexArray(0);
-		EndDrawing();
+
+		glfwPollEvents();
+		glfwSwapBuffers(win);
 	}
-	UnloadShader(shader);
-	CloseWindow();
+
+	glfwDestroyWindow(win);
+	glfwTerminate();
+	exit(EXIT_SUCCESS);
 }
