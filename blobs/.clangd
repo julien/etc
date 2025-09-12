@@ -1,2 +1,2 @@
 CompileFlags:
-  Add: [-I/Users/jc/.local/glfw/include]
+  Add: [-I/Users/jc/.local/src/include]

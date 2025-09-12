@@ -1,6 +1,6 @@
 CC=clang
-INCLUDE=-I$(HOME)/.local/glfw/include
-LIB=$(HOME)/.local/glfw/lib/libglfw3.a
+INCLUDE=-I$(CPATH)
+LIB=$(LIBRARY_PATH)/libglfw3.a
 FRAMEWORKS=-framework OpenGL -framework Cocoa -framework IOKit \
            -framework CoreAudio -framework CoreVideo -framework AudioToolbox
 
