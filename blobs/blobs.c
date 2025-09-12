@@ -93,7 +93,7 @@ float rand_range(float min, float max) {
 	return min + rand() / (RAND_MAX / (max - min + 1) + 1);
 }
 
-#define MAX_POINTS 10000
+#define MAX_POINTS 50000
 #define POINT_SIZE 7
 const unsigned int numPoints = MAX_POINTS * POINT_SIZE;
 
@@ -129,9 +129,9 @@ void update(struct blob *blobs, float *points) {
 		blobs[i].cr += vr;
 
 		if (ax < 0.01 && ay < 0.01 && ar < 0.01) {
-			blobs[i].ex = rand_range(2, 6) * 0.008;
-			blobs[i].ey = rand_range(2, 6) * 0.008;
-			blobs[i].er = rand_range(2, 6) * 0.09;
+			blobs[i].ex = rand_range(1, 2) * 0.03;
+			blobs[i].ey = rand_range(1, 2) * 0.03;
+			blobs[i].er = rand_range(1, 2) * 0.09;
 
 			blobs[i].nx = rand_range(-10, 10) * 0.1;
 			blobs[i].ny = rand_range(-10, 10) * 0.1;
